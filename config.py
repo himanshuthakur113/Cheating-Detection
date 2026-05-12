@@ -2,4 +2,4 @@
 
 SKIP_FRAMES = 2
 
-shakal_ka_model = "models/face_landmarker.task"
+mp_face_model = "models/face_landmarker.task"
