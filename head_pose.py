@@ -11,7 +11,7 @@ def get_head_pose(lm,frame):
     left_mouth = 61
     right_mouth = 291
 
-    face_2d = []
+    face_2d = []    
     face_3d = []
 
     points = [nose, chin, left_eye, right_eye, left_mouth, right_mouth]
