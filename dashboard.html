@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Invigilator Dashboard — HPTU</title>
+        <style>
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background: #f5f5f5;
+            }
+
+            /* ── header — same as index.html ─────────────────────────────── */
+            .university_branding {
+                background-color: #1a237e;
+                color: white;
+                padding: 16px 32px;
+                text-align: center;
+            }
+
+            .university_branding h1 { margin: 0 0 4px; font-size: 22px; }
+            .university_branding h2 { margin: 0; font-size: 15px; font-weight: normal; opacity: 0.85; }
+
+            .exam_details {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 32px;
+                background-color: #e8eaf6;
+                border-bottom: 2px solid #1a237e;
+                font-size: 14px;
+            }
+
+            /* ── toolbar ─────────────────────────────────────────────────── */
+            .toolbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 32px;
+                background: #283593;
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+                letter-spacing: 1px;
+            }
+
+            .toolbar-right {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+
+            .btn {
+                padding: 7px 18px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: bold;
+                letter-spacing: 0.5px;
+            }
+
+            .btn-export  { background: #00c853; color: white; }
+            .btn-refresh { background: #e8eaf6; color: #1a237e; }
+            .btn-export:hover  { background: #00a844; }
+            .btn-refresh:hover { background: #c5cae9; }
+
+            .live-dot {
+                display: inline-block;
+                width: 9px;
+                height: 9px;
+                background: #00e676;
+                border-radius: 50%;
+                margin-right: 6px;
+                animation: blink 1.2s infinite;
+            }
+
+            @keyframes blink {
+                0%, 100% { opacity: 1; }
+                50%       { opacity: 0.2; }
+            }
+
+            /* ── main layout ─────────────────────────────────────────────── */
+            main {
+                max-width: 1100px;
+                margin: 28px auto;
+                padding: 0 24px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+
+            .full-width { grid-column: 1 / -1; }
+
+            /* ── cards — same style as question-block in index.html ──────── */
+            .card {
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 20px 24px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+            }
+
+            .card-title {
+                font-size: 14px;
+                font-weight: bold;
+                color: #1a237e;
+                letter-spacing: 0.5px;
+                margin: 0 0 16px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #e8eaf6;
+            }
+
+            /* ── stats strip ─────────────────────────────────────────────── */
+            .stats-strip {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+                grid-column: 1 / -1;
+            }
+
+            .stat-box {
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 16px 20px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+                text-align: center;
+            }
+
+            .stat-value {
+                font-size: 32px;
+                font-weight: bold;
+                color: #1a237e;
+                line-height: 1;
+                margin-bottom: 4px;
+            }
+
+            .stat-label {
+                font-size: 12px;
+                color: #777;
+                letter-spacing: 0.5px;
+            }
+
+            /* ── student table ───────────────────────────────────────────── */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13px;
+            }
+
+            th {
+                text-align: left;
+                padding: 8px 10px;
+                font-size: 11px;
+                font-weight: bold;
+                color: #555;
+                letter-spacing: 0.5px;
+                border-bottom: 2px solid #e8eaf6;
+                background: #f9f9ff;
+            }
+
+            td {
+                padding: 10px 10px;
+                border-bottom: 1px solid #eee;
+                color: #333;
+                vertical-align: middle;
+            }
+
+            tr:last-child td { border-bottom: none; }
+
+            tr.clickable { cursor: pointer; }
+            tr.clickable:hover td { background: #f5f5ff; }
+            tr.selected td { background: #e8eaf6; }
+
+            /* ── risk badges ─────────────────────────────────────────────── */
+            .risk {
+                display: inline-block;
+                padding: 3px 10px;
+                border-radius: 10px;
+                font-size: 11px;
+                font-weight: bold;
+                letter-spacing: 0.5px;
+            }
+
+            .risk-low    { background: #e8f5e9; color: #2e7d32; }
+            .risk-medium { background: #fff3e0; color: #e65100; }
+            .risk-high   { background: #ffebee; color: #b71c1c; }
+
+            .verdict-flag  { color: #b71c1c; font-weight: bold; }
+            .verdict-watch { color: #e65100; font-weight: bold; }
+            .verdict-safe  { color: #2e7d32; }
+
+            /* ── event timeline ──────────────────────────────────────────── */
+            .timeline {
+                max-height: 300px;
+                overflow-y: auto;
+                font-size: 13px;
+            }
+
+            .timeline-empty {
+                color: #999;
+                font-size: 13px;
+                padding: 16px 0;
+                text-align: center;
+            }
+
+            .event-row {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 8px 0;
+                border-bottom: 1px solid #eee;
+            }
+
+            .event-row:last-child { border-bottom: none; }
+
+            .event-time {
+                font-size: 11px;
+                color: #999;
+                white-space: nowrap;
+                min-width: 68px;
+                padding-top: 2px;
+            }
+
+            .event-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                margin-top: 4px;
+                flex-shrink: 0;
+            }
+
+            .dot-flag  { background: #f44336; }
+            .dot-watch { background: #ff9800; }
+            .dot-safe  { background: #00c853; }
+
+            .event-text { flex: 1; line-height: 1.4; }
+            .event-score {
+                font-size: 11px;
+                color: #aaa;
+                white-space: nowrap;
+                padding-top: 2px;
+            }
+
+            /* ── no data state ───────────────────────────────────────────── */
+            .empty-state {
+                text-align: center;
+                padding: 40px 20px;
+                color: #bbb;
+                font-size: 14px;
+            }
+
+            /* ── last updated ────────────────────────────────────────────── */
+            #last_updated {
+                font-size: 12px;
+                color: #aaa;
+                font-weight: normal;
+            }
+
+        </style>
+    </head>
+    <body>
+
+        <!-- ── header — same structure as index.html ───────────────────── -->
+        <header>
+            <div class="university_branding">
+                <h1>Himachal Pradesh Technical University</h1>
+                <h2>Invigilator Dashboard — Live Proctoring Monitor</h2>
+            </div>
+            <div class="exam_details">
+                <div>
+                    <p style="margin:0"><strong>Subject:</strong> Advance Machine Learning</p>
+                    <p style="margin:0"><strong>Exam Type:</strong> End Semester Examination</p>
+                </div>
+                <div style="text-align:right">
+                    <p style="margin:0"><strong>Role:</strong> Invigilator</p>
+                    <p style="margin:0" id="last_updated">Last updated: —</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── toolbar ──────────────────────────────────────────────────── -->
+        <div class="toolbar">
+            <span><span class="live-dot"></span> LIVE MONITORING</span>
+            <div class="toolbar-right">
+                <button class="btn btn-refresh" onclick="fetchLogs()">↻ Refresh now</button>
+                <button class="btn btn-export"  onclick="exportCSV()">⬇ Download Report</button>
+            </div>
+        </div>
+
+        <!-- ── main grid ─────────────────────────────────────────────────── -->
+        <main>
+
+            <!-- stats strip -->
+            <div class="stats-strip">
+                <div class="stat-box">
+                    <div class="stat-value" id="stat_students">0</div>
+                    <div class="stat-label">STUDENTS ACTIVE</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="stat_flags" style="color:#b71c1c">0</div>
+                    <div class="stat-label">TOTAL FLAGS</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="stat_high" style="color:#e65100">0</div>
+                    <div class="stat-label">HIGH RISK</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="stat_alerts">0</div>
+                    <div class="stat-label">TOTAL ALERTS</div>
+                </div>
+            </div>
+
+            <!-- student table -->
+            <div class="card full-width">
+                <div class="card-title">● STUDENT OVERVIEW</div>
+                <div id="table_wrap">
+                    <div class="empty-state">Waiting for students to connect…</div>
+                </div>
+            </div>
+
+            <!-- event timeline for selected student -->
+            <div class="card full-width">
+                <div class="card-title" id="timeline_title">● EVENT TIMELINE — select a student above</div>
+                <div class="timeline" id="timeline">
+                    <div class="timeline-empty">No student selected.</div>
+                </div>
+            </div>
+
+        </main>
+
+        <script>
+
+            const API_BASE       = 'http://localhost:5000';
+            const POLL_MS        = 3000;   // refresh every 3 seconds
+            let   selected_sid   = null;
+            let   all_data       = [];
+
+            // ── fetch logs from backend ──────────────────────────────────────
+            async function fetchLogs() {
+                try {
+                    const res  = await fetch(API_BASE + '/logs');
+                    if (!res.ok) return;
+                    all_data = await res.json();
+                    renderDashboard(all_data);
+                    document.getElementById('last_updated').textContent =
+                        'Last updated: ' + new Date().toLocaleTimeString();
+                } catch (err) {
+                    console.warn('[dashboard] backend unreachable:', err.message);
+                }
+            }
+
+            // ── render everything ────────────────────────────────────────────
+            function renderDashboard(data) {
+                updateStats(data);
+                renderTable(data);
+                // re-render timeline if a student is selected
+                if (selected_sid) {
+                    const student = data.find(function(s){ return s.student_id === selected_sid; });
+                    if (student) renderTimeline(student);
+                }
+            }
+
+            // ── stats strip ──────────────────────────────────────────────────
+            function updateStats(data) {
+                const total_flags  = data.reduce(function(s, d){ return s + d.flag_count; }, 0);
+                const total_alerts = data.reduce(function(s, d){ return s + d.alert_count; }, 0);
+                const high_risk    = data.filter(function(d){ return d.risk_level === 'high'; }).length;
+
+                document.getElementById('stat_students').textContent = data.length;
+                document.getElementById('stat_flags').textContent    = total_flags;
+                document.getElementById('stat_high').textContent     = high_risk;
+                document.getElementById('stat_alerts').textContent   = total_alerts;
+            }
+
+            // ── student table ────────────────────────────────────────────────
+            function renderTable(data) {
+                const wrap = document.getElementById('table_wrap');
+
+                if (data.length === 0) {
+                    wrap.innerHTML = '<div class="empty-state">Waiting for students to connect…</div>';
+                    return;
+                }
+
+                // sort: high risk first, then by total score desc
+                const sorted = data.slice().sort(function(a, b) {
+                    const order = { high: 0, medium: 1, low: 2 };
+                    if (order[a.risk_level] !== order[b.risk_level])
+                        return order[a.risk_level] - order[b.risk_level];
+                    return b.total_score - a.total_score;
+                });
+
+                let rows = sorted.map(function(s) {
+                    const risk_class = 'risk-' + s.risk_level;
+                    const v_class    = 'verdict-' + s.last_verdict;
+                    const selected   = s.student_id === selected_sid ? ' selected' : '';
+                    const last_time  = s.last_time
+                        ? new Date(s.last_time * 1000).toLocaleTimeString()
+                        : '—';
+
+                    return `<tr class="clickable${selected}" onclick="selectStudent('${s.student_id}')">
+                        <td><strong>${s.student_id}</strong></td>
+                        <td><span class="risk ${risk_class}">${s.risk_level.toUpperCase()}</span></td>
+                        <td>${s.total_score}</td>
+                        <td>${s.flag_count}</td>
+                        <td>${s.alert_count}</td>
+                        <td class="${v_class}">${s.last_verdict.toUpperCase()}</td>
+                        <td style="color:#555; font-size:12px">${s.last_reason || '—'}</td>
+                        <td style="color:#aaa; font-size:12px">${last_time}</td>
+                    </tr>`;
+                }).join('');
+
+                wrap.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>STUDENT ID</th>
+                                <th>RISK</th>
+                                <th>SCORE</th>
+                                <th>FLAGS</th>
+                                <th>ALERTS</th>
+                                <th>LAST VERDICT</th>
+                                <th>LAST REASON</th>
+                                <th>LAST EVENT</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>`;
+            }
+
+            // ── student selection + timeline ─────────────────────────────────
+            function selectStudent(sid) {
+                selected_sid = sid;
+                // highlight row
+                document.querySelectorAll('tr.clickable').forEach(function(tr) {
+                    tr.classList.remove('selected');
+                    if (tr.querySelector('td strong') &&
+                        tr.querySelector('td strong').textContent === sid) {
+                        tr.classList.add('selected');
+                    }
+                });
+                const student = all_data.find(function(s){ return s.student_id === sid; });
+                if (student) renderTimeline(student);
+            }
+
+            function renderTimeline(student) {
+                document.getElementById('timeline_title').textContent =
+                    '● EVENT TIMELINE — ' + student.student_id +
+                    '  (' + student.events.length + ' events)';
+
+                const tl = document.getElementById('timeline');
+                if (!student.events || student.events.length === 0) {
+                    tl.innerHTML = '<div class="timeline-empty">No events recorded for this student.</div>';
+                    return;
+                }
+
+                // show most recent first
+                const events = student.events.slice().reverse();
+                tl.innerHTML = events.map(function(e) {
+                    const dot_class = 'dot-' + e.verdict;
+                    const time_str  = e.timestamp
+                        ? new Date(e.timestamp * 1000).toLocaleTimeString()
+                        : '—';
+                    const conf_pct  = e.confidence !== undefined
+                        ? ' · ' + Math.round(e.confidence * 100) + '% confidence'
+                        : '';
+
+                    return `<div class="event-row">
+                        <span class="event-time">${time_str}</span>
+                        <span class="event-dot ${dot_class}"></span>
+                        <span class="event-text">
+                            <strong>${e.verdict.toUpperCase()}</strong> — ${e.reason}${conf_pct}
+                        </span>
+                        <span class="event-score">score +${e.score}</span>
+                    </div>`;
+                }).join('');
+            }
+
+            // ── CSV export ────────────────────────────────────────────────────
+            function exportCSV() {
+                const url = selected_sid
+                    ? API_BASE + '/export-csv?student_id=' + selected_sid
+                    : API_BASE + '/export-csv';
+                window.location.href = url;
+            }
+
+            // ── auto-poll ─────────────────────────────────────────────────────
+            fetchLogs();
+            setInterval(fetchLogs, POLL_MS);
+
+        </script>
+
+    </body>
+</html>

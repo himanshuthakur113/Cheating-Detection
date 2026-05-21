@@ -215,6 +215,12 @@
 
     <script>
 
+        // ── config ──────────────────────────────────────────────────────────
+        const API_BASE   = 'http://localhost:5000';
+        const STUDENT_ID = 'student_01';
+        const FRAME_MS   = 1500;    // send a frame every 1.5 seconds
+
+        // ── countdown timer ─────────────────────────────────────────────────
         let total_seconds = 5400;
         const timer = setInterval(function() {
             total_seconds--;
@@ -231,51 +237,254 @@
             }
         },1000);
 
-
+        // ── webcam setup ─────────────────────────────────────────────────────
         const webcam = document.getElementById('webcam');
+        const canvas = document.createElement('canvas');
+        canvas.width  = 320;
+        canvas.height = 240;
+        const ctx = canvas.getContext('2d');
+
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(function(stream) {
                 webcam.srcObject = stream;
+                webcam.onloadedmetadata = function() {
+                    startFrameLoop();
+                };
             })
             .catch(function(error) {
                 console.error('Webcam access denied:', error);
+                addLog('Webcam access denied — camera detection disabled', 'warn');
             });
 
-            function setStatus(state) {
-                const container = document.querySelector('.webcam_container');
-                const label = document.getElementById('status_label');
-                
-                container.classList.remove('status-safe', 'status-warn', 'status-danger');
-                
-                if (state === 'safe') {
-                    container.classList.add('status-safe');
-                    label.style.color = '#00c853';
-                    label.textContent = '● SAFE';
-                } else if (state === 'warn') {
-                    container.classList.add('status-warn');
-                    label.style.color = '#ff9800';
-                    label.textContent = '● WATCH';
-                } else if (state === 'danger') {
-                    container.classList.add('status-danger');
-                    label.style.color = '#f44336';
-                    label.textContent = '● FLAGGED';
-                }   
+        // ── status / alert UI (your existing functions, unchanged) ───────────
+        function setStatus(state) {
+            const container = document.querySelector('.webcam_container');
+            const label = document.getElementById('status_label');
+            container.classList.remove('status-safe', 'status-warn', 'status-danger');
+            if (state === 'safe') {
+                container.classList.add('status-safe');
+                label.style.color = '#00c853';
+                label.textContent = '● SAFE';
+            } else if (state === 'warn') {
+                container.classList.add('status-warn');
+                label.style.color = '#ff9800';
+                label.textContent = '● WATCH';
+            } else if (state === 'danger') {
+                container.classList.add('status-danger');
+                label.style.color = '#f44336';
+                label.textContent = '● FLAGGED';
             }
-            setStatus('safe');
+        }
+        setStatus('safe');
 
-            function showAlert(message) {
-                const banner = document.getElementById('alert_banner');
-                const msg = document.getElementById('alert_message');
-                msg.textContent = '⚠️ ' + message;
-                banner.style.display = 'block';
+        let alert_timeout = null;
+        function showAlert(message) {
+            const banner = document.getElementById('alert_banner');
+            const msg    = document.getElementById('alert_message');
+            msg.textContent = '⚠️ ' + message;
+            banner.style.display = 'block';
+            clearTimeout(alert_timeout);
+            alert_timeout = setTimeout(hideAlert, 4000);
+        }
+
+        function hideAlert() {
+            document.getElementById('alert_banner').style.display = 'none';
+        }
+
+        // ── alert log (collapsible, bottom of page) ──────────────────────────
+        const log_entries = [];
+
+        function addLog(message, verdict) {
+            const now = new Date().toLocaleTimeString();
+            log_entries.unshift({ time: now, message, verdict });
+            renderLog();
+            updateLogBadge();
+        }
+
+        function renderLog() {
+            const list = document.getElementById('log_list');
+            if (!list) return;
+            list.innerHTML = log_entries.slice(0, 30).map(function(e) {
+                const color = e.verdict === 'flag'  ? '#f44336'
+                            : e.verdict === 'watch' ? '#ff9800'
+                            : '#00c853';
+                return `<li style="padding:5px 0; border-bottom:1px solid #eee; font-size:13px;">
+                    <span style="color:#999; margin-right:8px;">${e.time}</span>
+                    <span style="color:${color}; font-weight:bold; margin-right:6px;">[${e.verdict.toUpperCase()}]</span>
+                    ${e.message}
+                </li>`;
+            }).join('');
+        }
+
+        function updateLogBadge() {
+            const badge = document.getElementById('log_badge');
+            if (badge) {
+                const flags = log_entries.filter(function(e){ return e.verdict !== 'safe'; }).length;
+                badge.textContent = flags;
+                badge.style.display = flags > 0 ? 'inline' : 'none';
             }
+        }
 
-            function hideAlert() {
-                document.getElementById('alert_banner').style.display = 'none';
+        // ── apply verdict from backend ────────────────────────────────────────
+        function applyVerdict(result) {
+            const v = result.verdict;
+            if (v === 'flag') {
+                setStatus('danger');
+                showAlert(result.reason);
+                addLog(result.reason, 'flag');
+            } else if (v === 'watch') {
+                setStatus('warn');
+                addLog(result.reason, 'watch');
+            } else {
+                setStatus('safe');
+                // only log safe if it has a notable reason (e.g. writing detected)
+                if (result.reason && result.reason !== 'normal behaviour') {
+                    addLog(result.reason, 'safe');
+                }
             }
+        }
 
-           
+        // ── frame capture loop ────────────────────────────────────────────────
+        function captureFrame() {
+            ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg', 0.7);
+        }
+
+        async function sendFrame() {
+            try {
+                const frame = captureFrame();
+                const res   = await fetch(API_BASE + '/analyze', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        frame:        frame,
+                        student_id:   STUDENT_ID,
+                        timestamp_ms: Date.now(),
+                    }),
+                });
+                if (!res.ok) return;
+                const result = await res.json();
+                applyVerdict(result);
+            } catch (err) {
+                // backend not running — silently ignore so exam page still works
+                console.warn('[proctoring] backend unreachable:', err.message);
+            }
+        }
+
+        function startFrameLoop() {
+            sendFrame();   // send immediately on load
+            setInterval(sendFrame, FRAME_MS);
+        }
+
+        // ── browser-level event detection ─────────────────────────────────────
+        async function sendBrowserEvent(event_name) {
+            addLog(event_name.replace('_', ' ') + ' detected', 'flag');
+            setStatus('danger');
+            showAlert(event_name.replace(/_/g, ' '));
+            try {
+                const res = await fetch(API_BASE + '/browser-event', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        event:      event_name,
+                        student_id: STUDENT_ID,
+                    }),
+                });
+                if (res.ok) {
+                    const result = await res.json();
+                    applyVerdict(result);
+                }
+            } catch (err) {
+                console.warn('[proctoring] browser event not sent:', err.message);
+            }
+        }
+
+        // tab switch
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                sendBrowserEvent('tab_switch');
+            }
+        });
+
+        // window loses focus (alt+tab, another app)
+        window.addEventListener('blur', function() {
+            sendBrowserEvent('window_blur');
+        });
+
+        // right-click disabled
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            sendBrowserEvent('right_click');
+        });
+
+        // copy / paste / cut shortcuts
+        document.addEventListener('keydown', function(e) {
+            const ctrl = e.ctrlKey || e.metaKey;
+            if (ctrl && ['c','v','x','u'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+                sendBrowserEvent('copy_paste');
+            }
+            // F12 or Ctrl+Shift+I → devtools
+            if (e.key === 'F12' || (ctrl && e.shiftKey && e.key.toLowerCase() === 'i')) {
+                e.preventDefault();
+                sendBrowserEvent('devtools');
+            }
+        });
+
+        // ── log panel toggle ──────────────────────────────────────────────────
+        function toggleLog() {
+            const panel   = document.getElementById('log_panel');
+            const chevron = document.getElementById('log_chevron');
+            const open    = panel.style.display !== 'none';
+            panel.style.display   = open ? 'none' : 'block';
+            chevron.textContent   = open ? '▼ show' : '▲ hide';
+        }
 
     </script>
+        <!-- ── alert log panel ─────────────────────────────────────────── -->
+        <div style="
+            max-width: 860px;
+            margin: 0 auto 40px;
+            padding: 0 20px;
+        ">
+            <div style="
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+                overflow: hidden;
+            ">
+                <div onclick="toggleLog()" style="
+                    padding: 12px 20px;
+                    background: #1a237e;
+                    color: white;
+                    cursor: pointer;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    user-select: none;
+                ">
+                    <span style="font-weight: bold; font-size: 14px; letter-spacing: 1px;">
+                        ● PROCTORING LOG
+                        <span id="log_badge" style="
+                            display: none;
+                            background: #f44336;
+                            color: white;
+                            border-radius: 10px;
+                            padding: 1px 8px;
+                            font-size: 12px;
+                            margin-left: 8px;
+                        ">0</span>
+                    </span>
+                    <span id="log_chevron" style="font-size: 12px;">▼ show</span>
+                </div>
+                <div id="log_panel" style="display: none; padding: 12px 20px; max-height: 220px; overflow-y: auto;">
+                    <ul id="log_list" style="list-style: none; padding: 0; margin: 0; color: #333;">
+                        <li style="color: #999; font-size: 13px; padding: 6px 0;">No events recorded yet.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
     </body>
 </html>

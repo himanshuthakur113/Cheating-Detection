@@ -145,6 +145,66 @@ def reset():
     return jsonify({"status": "reset", "student_id": student_id})
 
 
+# ── CSV export ────────────────────────────────────────────────────────────────
+
+@app.route("/export-csv", methods=["GET"])
+def export_csv():
+    """
+    Download all alert events as a CSV file.
+    Optional query param: ?student_id=student_01
+    """
+    import csv, io
+    from flask import Response
+
+    student_id = request.args.get("student_id")
+
+    rows = []
+    if student_id:
+        for e in alert_log.get(student_id, []):
+            rows.append(_event_to_row(student_id, e))
+    else:
+        for sid, events in alert_log.items():
+            for e in events:
+                rows.append(_event_to_row(sid, e))
+
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=[
+        "student_id", "timestamp", "verdict", "reason",
+        "confidence", "score", "alert_count",
+        "yaw", "pitch", "roll", "ear",
+        "wrist_vel", "hand_visible", "svm_label", "svm_proba",
+    ])
+    writer.writeheader()
+    writer.writerows(rows)
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=session_report.csv"}
+    )
+
+
+def _event_to_row(student_id, e):
+    d = e.get("details", {})
+    return {
+        "student_id":   student_id,
+        "timestamp":    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(e.get("timestamp", 0))),
+        "verdict":      e.get("verdict", ""),
+        "reason":       e.get("reason", ""),
+        "confidence":   e.get("confidence", ""),
+        "score":        e.get("score", ""),
+        "alert_count":  e.get("alert_count", ""),
+        "yaw":          d.get("yaw", ""),
+        "pitch":        d.get("pitch", ""),
+        "roll":         d.get("roll", ""),
+        "ear":          d.get("ear", ""),
+        "wrist_vel":    d.get("wrist_vel", ""),
+        "hand_visible": d.get("hand_visible", ""),
+        "svm_label":    d.get("svm_label", ""),
+        "svm_proba":    d.get("svm_proba", ""),
+    }
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def __blank_frame():
@@ -162,5 +222,6 @@ if __name__ == "__main__":
     print("       POST http://localhost:5000/browser-event")
     print("       GET  http://localhost:5000/logs")
     print("       POST http://localhost:5000/reset")
+    print("       GET  http://localhost:5000/export-csv")
     print("       GET  http://localhost:5000/health\n")
     app.run(host="0.0.0.0", port=5000, debug=False)
