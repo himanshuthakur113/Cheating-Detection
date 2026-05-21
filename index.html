@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang = "en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Online examination HPTU</title>
+        <style>
+
+            .university_branding {
+                background-color: #1a237e;
+                color: white;
+                padding: 16px 32px;
+                text-align: center;
+            }
+
+            .exam_details {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 32px;
+                background-color: #e8eaf6;
+                border-bottom: 2px solid #1a237e;
+            }
+
+            .time_bar {
+                position: sticky;
+                top: 0;
+                background-color: #283593;
+                color: white;
+                padding: 10px;
+                text-align: center;
+                font-size: 22px;
+                font-weight: bold;
+                z-index: 100;
+                letter-spacing: 2px;
+            }
+            main {
+                max-width: 860px;
+                margin: 30px auto;
+                padding: 0 20px;
+            }
+            .question-block {
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 20px 24px;
+                margin-bottom: 20px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+            }
+            .question-text {
+                font-size: 16px;
+                margin-bottom: 12px;
+                color: #1a237e;
+            }
+            .options {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .options label {
+                cursor: pointer;
+                font-size: 15px;
+            }
+            .submit-btn {
+                display: block;
+                margin: 30px auto;
+                padding: 14px 48px;
+                background-color: #1a237e;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+            .webcam_container {
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                width: 160px;
+                height: 120px;
+                border-radius: 10px;
+                overflow: hidden;
+                border: 3px solid #1a237e;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 200;
+            }
+
+            #webcam {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .status-safe {
+                border: 3px solid #00c853;
+                box-shadow: 0 0 0 3px #00c853, 0 0 16px #00c853;
+            }
+            .status-warn {
+                border: 3px solid #ff9800;
+                box-shadow: 0 0 0 3px #ff9800, 0 0 16px #ff9800;
+            }
+            .status-danger {
+                border: 3px solid #f44336;
+                box-shadow: 0 0 0 3px #f44336, 0 0 16px #f44336;
+            }
+
+            #alert_banner {
+                display: none;
+                background-color: #b71c1c;
+                color: white;
+                text-align: center;
+                padding: 12px;
+                font-size: 15px;
+                font-weight: bold;
+                letter-spacing: 1px;
+                animation: pulse 1s infinite;
+            }
+
+            @keyframes pulse {
+                0%   { opacity: 1; }
+                50%  { opacity: 0.6; }
+                100% { opacity: 1; }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class = "university_branding">
+                <h1>Himachal Pradesh Technical University</h1>
+                <h2>Online examination</h2>
+            </div>
+            <div class = "exam_details">
+                <div class = "left_details">
+                    <p><strong>Subject:</strong> Advance Machine Learning</p>
+                    <p><strong>Exam Type:</strong> End semester examination</p>
+                </div>
+                <div class = "right_details">
+                    <p><strong>Student:</strong> Himanshu Thakur 23010603019</p>
+                    <p><strong>Time Allowed:</strong> 3 Hours</p>
+                </div>
+            </div> 
+        </header>
+
+        <div class = "time_bar">
+                <span>Time Remaining:</span>
+                <span id = "cntdwn">01:30:00</span>
+        </div>
+
+        <div id = "alert_banner">
+            <span id = "alert_message">Do not cheat</span>
+        </div>
+
+        <main>
+            <form>
+                <div class="question-block">
+                    <p class="question-text"><strong>1.</strong> You are training a deep neural network on a small tabular dataset. During training, you notice that the loss on the training set drops to near zero, but the loss on the validation set begins to rise sharply after epoch 20. Which of the following interventions would be <strong>least</strong> effective at mitigating this specific issue?</p>
+                    <div class="options">
+                        <label><input type="radio" name="q1" value="a"> Implementing L2 regularization (Weight Decay)</label>
+                        <label><input type="radio" name="q1" value="b"> Applying Dropout layers with a rate of 0.5</label>
+                        <label><input type="radio" name="q1" value="c"> Increasing the depth and layer width of the neural network</label>
+                        <label><input type="radio" name="q1" value="d"> Collecting more diverse training data points</label>
+                    </div>
+                </div>
+                <div class="question-block">
+                    <p class="question-text"><strong>2.</strong> In the context of Support Vector Machines (SVM), what happens to the decision boundary if we drastically increase the value of the hyperparameter C?</p>
+                    <div class="options">
+                        <label><input type="radio" name="q2" value="a"> The margin becomes wider, allowing for more misclassified training points to ensure better generalization.</label>
+                        <label><input type="radio" name="q2" value="b"> The margin becomes narrower, penalizing misclassified training points heavily and risking overfitting.</label>
+                        <label><input type="radio" name="q2" value="c"> The decision boundary ignores the support vectors and relies entirely on the global mean of the classes.</label>
+                        <label><input type="radio" name="q2" value="d"> The model transforms automatically into a linear classifier, ignoring the kernel trick entirely.</label>
+                    </div>
+                </div>
+                <div class="question-block">
+                    <p class="question-text"><strong>3.</strong> Which of the following statements accurately captures the fundamental structural difference between Random Forests and Gradient Boosted Trees (GBDTs)?</p>
+                    <div class="options">
+                        <label><input type="radio" name="q3" value="a"> Random Forests build deep trees sequentially, while GBDTs build shallow trees completely in parallel.</label>
+                        <label><input type="radio" name="q3" value="b"> Random Forests rely on reducing bias, whereas GBDTs rely primarily on reducing variance through bootstrapping.</label>
+                        <label><input type="radio" name="q3" value="c"> Random Forests build independent deep trees in parallel to reduce variance, while GBDTs build shallow trees sequentially to correct the errors (residuals) of previous trees.</label>
+                        <label><input type="radio" name="q3" value="d"> Random Forests can only be used for classification tasks, while GBDTs are strictly limited to regression tasks.</label>
+                    </div>
+                </div>
+                <div class="question-block">
+                    <p class="question-text"><strong>4.</strong> You are developing a Machine Learning model for an automated medical screening application to detect a rare, highly contagious disease. Missing a positive case has catastrophic public health consequences, while a false alarm simply requires a quick, low-cost secondary blood test. Which metric should you optimize your classification threshold for?</p>
+                    <div class="options">
+                        <label><input type="radio" name="q4" value="a"> High Precision</label>
+                        <label><input type="radio" name="q4" value="b"> High Recall (Sensitivity)</label>
+                        <label><input type="radio" name="q4" value="c"> High Specificity</label>
+                        <label><input type="radio" name="q4" value="d"> Maximum Negative Predictive Value (NPV)</label>
+                    </div>
+                </div>
+                <div class="question-block">
+                    <p class="question-text"><strong>5.</strong> When applying Principal Component Analysis (PCA) for dimensionality reduction, which of the following properties is true regarding the extracted Principal Components (PCs)?</p>
+                    <div class="options">
+                        <label><input type="radio" name="q5" value="a"> The first principal component captures the least amount of variance present in the original dataset.</label>
+                        <label><input type="radio" name="q5" value="b"> All principal components are highly correlated with one another to preserve structural information.</label>
+                        <label><input type="radio" name="q5" value="c"> The principal components are mutually orthogonal (perpendicular) to each other, meaning they are completely uncorrelated.</label>
+                        <label><input type="radio" name="q5" value="d"> PCA performs a non-linear mapping that alters the distance ratios between points irreversibly.</label>
+                    </div>
+                </div>
+                <button type="submit" class = "submit-btn">Submit Exam</button>
+            </form>
+        </main>
+
+        <div class = "webcam_container">
+            <video id="webcam" autoplay muted playsinline></video>
+            <div id ="status_label" style="
+                text-align: center;
+                font-size: 11px;
+                font-weight: bold;
+                padding: 3px 0;
+                background: #111;
+                color: #00c853;
+                letter-spacing: 1px;
+            ">● SAFE</div>
+        </div>
+
+    <script>
+
+        let total_seconds = 5400;
+        const timer = setInterval(function() {
+            total_seconds--;
+            let hours = Math.floor(total_seconds/3600);
+            let minutes = Math.floor((total_seconds%3600)/60);
+            let seconds = total_seconds%60;
+            const cntdwn = document.getElementById("cntdwn");
+            if(cntdwn){
+                cntdwn.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            if(total_seconds <= 0){
+                clearInterval(timer);
+                alert("Time's up! exam submitted.");
+            }
+        },1000);
+
+
+        const webcam = document.getElementById('webcam');
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                webcam.srcObject = stream;
+            })
+            .catch(function(error) {
+                console.error('Webcam access denied:', error);
+            });
+
+            function setStatus(state) {
+                const container = document.querySelector('.webcam_container');
+                const label = document.getElementById('status_label');
+                
+                container.classList.remove('status-safe', 'status-warn', 'status-danger');
+                
+                if (state === 'safe') {
+                    container.classList.add('status-safe');
+                    label.style.color = '#00c853';
+                    label.textContent = '● SAFE';
+                } else if (state === 'warn') {
+                    container.classList.add('status-warn');
+                    label.style.color = '#ff9800';
+                    label.textContent = '● WATCH';
+                } else if (state === 'danger') {
+                    container.classList.add('status-danger');
+                    label.style.color = '#f44336';
+                    label.textContent = '● FLAGGED';
+                }   
+            }
+            setStatus('safe');
+
+            function showAlert(message) {
+                const banner = document.getElementById('alert_banner');
+                const msg = document.getElementById('alert_message');
+                msg.textContent = '⚠️ ' + message;
+                banner.style.display = 'block';
+            }
+
+            function hideAlert() {
+                document.getElementById('alert_banner').style.display = 'none';
+            }
+
+           
+
+    </script>
+    </body>
+</html>
